@@ -1,6 +1,7 @@
 import { Moon, Sun, LogOut, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTodoGuard } from "@/components/TodoGuard";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -8,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 export function AppHeader() {
   const { theme, setTheme } = useTheme();
   const { signOut, profile } = useAuth();
+  const { requestNavigation } = useTodoGuard();
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -37,7 +39,7 @@ export function AppHeader() {
         >
           {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={signOut}>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => requestNavigation(signOut)}>
           <LogOut className="size-4" />
         </Button>
       </div>
