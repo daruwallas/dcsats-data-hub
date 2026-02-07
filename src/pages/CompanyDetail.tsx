@@ -1,27 +1,38 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Globe, Mail, Phone, Building2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ArrowLeft, MapPin, Globe, Mail, Phone, Building2, Plus, Pencil } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 export default function CompanyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
 
   const { data: company, isLoading } = useQuery({
     queryKey: ["company", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("companies").select("*").eq("id", id!).single();
+      const { data, error } = await supabase.from("companies").select("*").eq("id", id!).maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!id,
   });
 
-  const { data: contacts = [] } = useQuery({
+  const { data: contacts = [], refetch: refetchContacts } = useQuery({
     queryKey: ["company-contacts", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("company_contacts").select("*").eq("company_id", id!).order("is_primary", { ascending: false });
@@ -52,6 +63,7 @@ export default function CompanyDetail() {
           <h1 className="text-2xl font-bold flex items-center gap-2"><Building2 className="size-6" />{company.name}</h1>
           {company.industry && <p className="text-muted-foreground">{company.industry}</p>}
         </div>
+        <EditCompanyDialog company={company} open={editOpen} onOpenChange={setEditOpen} onSaved={() => { qc.invalidateQueries({ queryKey: ["company", id] }); setEditOpen(false); }} />
         <Badge variant={company.is_active ? "default" : "secondary"}>{company.is_active ? "Active" : "Inactive"}</Badge>
       </div>
 
@@ -68,7 +80,12 @@ export default function CompanyDetail() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Contacts ({contacts.length})</CardTitle></CardHeader>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Contacts ({contacts.length})</CardTitle>
+              <AddContactDialog companyId={id!} open={addContactOpen} onOpenChange={setAddContactOpen} onSaved={refetchContacts} />
+            </div>
+          </CardHeader>
           <CardContent>
             {contacts.length === 0 ? <p className="text-sm text-muted-foreground">No contacts yet</p> : (
               <div className="space-y-3">
@@ -110,5 +127,106 @@ export default function CompanyDetail() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function EditCompanyDialog({ company, open, onOpenChange, onSaved }: { company: any; open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: company.name || "",
+    industry: company.industry || "",
+    location: company.location || "",
+    website: company.website || "",
+    address: company.address || "",
+    description: company.description || "",
+  });
+
+  const handleSave = async () => {
+    if (!form.name) { toast({ title: "Error", description: "Name is required", variant: "destructive" }); return; }
+    setSaving(true);
+    const { error } = await supabase.from("companies").update({
+      name: form.name,
+      industry: form.industry || null,
+      location: form.location || null,
+      website: form.website || null,
+      address: form.address || null,
+      description: form.description || null,
+    }).eq("id", company.id);
+    setSaving(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Company updated!" });
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm"><Pencil className="size-4 mr-2" /> Edit</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Edit Company</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div><Label>Industry</Label><Input value={form.industry} onChange={e => setForm(f => ({ ...f, industry: e.target.value }))} /></div>
+            <div><Label>Location</Label><Input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} /></div>
+          </div>
+          <div><Label>Website</Label><Input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} /></div>
+          <div><Label>Address</Label><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
+          <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} /></div>
+          <Button onClick={handleSave} disabled={saving} className="w-full">{saving ? "Saving..." : "Save Changes"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddContactDialog({ companyId, open, onOpenChange, onSaved }: { companyId: string; open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", designation: "", email: "", phone: "", is_primary: false });
+
+  const handleSave = async () => {
+    if (!form.name) { toast({ title: "Error", description: "Name is required", variant: "destructive" }); return; }
+    setSaving(true);
+    const { error } = await supabase.from("company_contacts").insert({
+      company_id: companyId,
+      name: form.name,
+      designation: form.designation || null,
+      email: form.email || null,
+      phone: form.phone || null,
+      is_primary: form.is_primary,
+    });
+    setSaving(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Contact added!" });
+    setForm({ name: "", designation: "", email: "", phone: "", is_primary: false });
+    onOpenChange(false);
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm"><Plus className="size-4 mr-2" /> Add Contact</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add Contact</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+          <div><Label>Designation</Label><Input value={form.designation} onChange={e => setForm(f => ({ ...f, designation: e.target.value }))} /></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
+            <div><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox checked={form.is_primary} onCheckedChange={v => setForm(f => ({ ...f, is_primary: v as boolean }))} id="primary" />
+            <Label htmlFor="primary">Primary Contact</Label>
+          </div>
+          <Button onClick={handleSave} disabled={saving} className="w-full">{saving ? "Saving..." : "Add Contact"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

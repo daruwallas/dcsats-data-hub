@@ -2,19 +2,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Briefcase, Target, CalendarDays, UserCheck, ShieldCheck, TrendingUp, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Users, Briefcase, Target, CalendarDays, UserCheck, ShieldCheck,
+  Plus, FileSearch, Zap, Activity
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { format } from "date-fns";
 
 const PIE_COLORS = [
-  "hsl(221, 83%, 53%)",
-  "hsl(142, 71%, 45%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(262, 83%, 58%)",
-  "hsl(0, 84%, 60%)",
-  "hsl(199, 89%, 48%)",
-  "hsl(346, 77%, 50%)",
-  "hsl(45, 93%, 47%)",
+  "hsl(221, 83%, 53%)", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",
+  "hsl(262, 83%, 58%)", "hsl(0, 84%, 60%)", "hsl(199, 89%, 48%)",
+  "hsl(346, 77%, 50%)", "hsl(45, 93%, 47%)",
 ];
 
 export default function Dashboard() {
@@ -98,24 +98,62 @@ export default function Dashboard() {
     },
   });
 
+  const { data: recentActivity = [] } = useQuery({
+    queryKey: ["dashboard-activity"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("activity_logs")
+        .select("id, action, entity_type, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8);
+      return data || [];
+    },
+  });
+
+  const { data: pipelineStats = { pending: 0, accepted: 0, rejected: 0 } } = useQuery({
+    queryKey: ["dashboard-pipeline"],
+    queryFn: async () => {
+      const { data } = await supabase.from("hr_pipeline").select("status");
+      if (!data) return { pending: 0, accepted: 0, rejected: 0 };
+      const stats = { pending: 0, accepted: 0, rejected: 0 };
+      data.forEach(p => {
+        if (p.status === "pending" || p.status === "sent") stats.pending++;
+        else if (p.status === "accepted") stats.accepted++;
+        else if (p.status === "rejected") stats.rejected++;
+      });
+      return stats;
+    },
+  });
+
   const stats = [
     { title: "Total Candidates", value: candidateCount, icon: Users, color: "text-blue-500", path: "/candidates" },
     { title: "Active Jobs", value: jobCount, icon: Briefcase, color: "text-green-500", path: "/jobs" },
     { title: "Matches", value: matchCount, icon: Target, color: "text-purple-500", path: "/matches" },
-    { title: "Scheduled Interviews", value: interviewCount, icon: CalendarDays, color: "text-orange-500", path: "/calendar" },
+    { title: "Interviews", value: interviewCount, icon: CalendarDays, color: "text-orange-500", path: "/calendar" },
     { title: "Hired", value: hiredCount, icon: UserCheck, color: "text-emerald-500", path: "/hired" },
-    { title: "Pending Verifications", value: verificationCount, icon: ShieldCheck, color: "text-yellow-500", path: "/verifications" },
+    { title: "Verifications", value: verificationCount, icon: ShieldCheck, color: "text-yellow-500", path: "/verifications" },
+  ];
+
+  const quickActions = [
+    { label: "Add Candidate", icon: Plus, path: "/candidates", color: "text-blue-500" },
+    { label: "Add Job", icon: Plus, path: "/jobs", color: "text-green-500" },
+    { label: "Power Match", icon: Target, path: "/matches", color: "text-purple-500" },
+    { label: "Match Resumes", icon: FileSearch, path: "/match-resumes", color: "text-orange-500" },
+    { label: "Reverse Match", icon: Zap, path: "/reverse-match", color: "text-pink-500" },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">
-          {greeting()}, {profile?.full_name || "User"}
-        </h1>
-        <p className="text-muted-foreground">Here&apos;s your recruitment overview</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {greeting()}, {profile?.full_name || "User"}
+          </h1>
+          <p className="text-muted-foreground">Here&apos;s your recruitment overview</p>
+        </div>
       </div>
 
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map((stat) => (
           <Card key={stat.title} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(stat.path)}>
@@ -130,6 +168,22 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map((action) => (
+              <Button key={action.label} variant="outline" size="sm" onClick={() => navigate(action.path)} className="gap-2">
+                <action.icon className={`size-4 ${action.color}`} />
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Charts */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-base">Candidate Pipeline</CardTitle></CardHeader>
@@ -163,6 +217,58 @@ export default function Dashboard() {
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom row: Pipeline Stats + Recent Activity */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-base">HR Pipeline Stats</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-yellow-500">{pipelineStats.pending}</p>
+                <p className="text-xs text-muted-foreground">Pending</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-green-500">{pipelineStats.accepted}</p>
+                <p className="text-xs text-muted-foreground">Accepted</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold text-red-500">{pipelineStats.rejected}</p>
+                <p className="text-xs text-muted-foreground">Rejected</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Recent Activity</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/activity-logs")} className="text-xs">View All</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((log) => (
+                  <div key={log.id} className="flex items-start gap-3 text-sm">
+                    <Activity className="size-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate">{log.action}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {log.entity_type && <span className="capitalize">{log.entity_type} · </span>}
+                        {format(new Date(log.created_at), "dd MMM, hh:mm a")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
