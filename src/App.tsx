@@ -20,6 +20,10 @@ import Matches from "@/pages/Matches";
 import MatchResumes from "@/pages/MatchResumes";
 import ReverseMatch from "@/pages/ReverseMatch";
 import HRPipeline from "@/pages/HRPipeline";
+import Todos from "@/pages/Todos";
+import Calendar from "@/pages/Calendar";
+import Verifications from "@/pages/Verifications";
+import Emails from "@/pages/Emails";
 import NotFound from "./pages/NotFound";
 
 // Phase 2: Public pages
@@ -79,10 +83,10 @@ const App = () => (
                 <Route path="/match-resumes" element={<MatchResumes />} />
                 <Route path="/reverse-match" element={<ReverseMatch />} />
                 {/* Workflows */}
-                <Route path="/calendar" element={<PlaceholderPage />} />
-                <Route path="/todos" element={<PlaceholderPage />} />
-                <Route path="/emails" element={<ProtectedRoute minRole="hr_manager"><PlaceholderPage /></ProtectedRoute>} />
-                <Route path="/verifications" element={<PlaceholderPage />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/todos" element={<Todos />} />
+                <Route path="/emails" element={<ProtectedRoute minRole="hr_manager"><Emails /></ProtectedRoute>} />
+                <Route path="/verifications" element={<Verifications />} />
                 <Route path="/hr-pipeline" element={<HRPipeline />} />
                 {/* Advanced */}
                 <Route path="/deal-closer" element={<PlaceholderPage />} />
