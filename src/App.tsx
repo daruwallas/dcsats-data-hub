@@ -19,6 +19,7 @@ import PlaceholderPage from "@/pages/PlaceholderPage";
 import Matches from "@/pages/Matches";
 import MatchResumes from "@/pages/MatchResumes";
 import ReverseMatch from "@/pages/ReverseMatch";
+import HRPipeline from "@/pages/HRPipeline";
 import NotFound from "./pages/NotFound";
 
 // Phase 2: Public pages
@@ -82,7 +83,7 @@ const App = () => (
                 <Route path="/todos" element={<PlaceholderPage />} />
                 <Route path="/emails" element={<ProtectedRoute minRole="hr_manager"><PlaceholderPage /></ProtectedRoute>} />
                 <Route path="/verifications" element={<PlaceholderPage />} />
-                <Route path="/hr-pipeline" element={<PlaceholderPage />} />
+                <Route path="/hr-pipeline" element={<HRPipeline />} />
                 {/* Advanced */}
                 <Route path="/deal-closer" element={<PlaceholderPage />} />
                 <Route path="/money-alerts" element={<ProtectedRoute minRole="hr_manager"><PlaceholderPage /></ProtectedRoute>} />
