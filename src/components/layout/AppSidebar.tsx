@@ -35,6 +35,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import dcsLogo from "@/assets/dcs-logo-clean.png";
 
 interface NavItem {
   title: string;
@@ -93,21 +94,31 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-widest font-semibold">
+        {label}
+      </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {visibleItems.map((item) => (
-            <SidebarMenuItem key={item.url}>
-              <SidebarMenuButton
-                isActive={location.pathname === item.url}
-                onClick={() => requestNavigation(() => navigate(item.url))}
-                tooltip={item.title}
-              >
-                <item.icon className="size-4" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {visibleItems.map((item) => {
+            const active = location.pathname === item.url;
+            return (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton
+                  isActive={active}
+                  onClick={() => requestNavigation(() => navigate(item.url))}
+                  tooltip={item.title}
+                  className={
+                    active
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-sidebar-primary rounded-none rounded-r-md"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
+                  }
+                >
+                  <item.icon className="size-4" />
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
@@ -120,37 +131,35 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-            D
-          </div>
+        <div className="flex items-center gap-3 px-2 py-2">
+          <img src={dcsLogo} alt="DCS Logo" className="size-8 rounded-lg object-contain" />
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold">DCS ATS</span>
-            <span className="text-xs text-muted-foreground">Recruitment</span>
+            <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">DCS ATS</span>
+            <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-wider">Recruitment Suite</span>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarSeparator />
-      <SidebarContent>
+      <SidebarSeparator className="bg-sidebar-border" />
+      <SidebarContent className="scrollbar-thin">
         <NavGroup label="Main" items={mainNav} />
         <NavGroup label="Matching" items={matchingNav} />
         <NavGroup label="Workflows" items={workflowNav} />
         <NavGroup label="Advanced" items={advancedNav} />
         <NavGroup label="Admin" items={adminNav} />
       </SidebarContent>
-      <SidebarSeparator />
+      <SidebarSeparator className="bg-sidebar-border" />
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-1">
-          <Avatar className="size-7">
-            <AvatarFallback className="text-xs">
+        <div className="flex items-center gap-2 px-2 py-2">
+          <Avatar className="size-7 border border-sidebar-border">
+            <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-accent-foreground">
               {profile?.full_name?.charAt(0)?.toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-xs font-medium truncate max-w-[140px]">
+            <span className="text-xs font-medium text-sidebar-accent-foreground truncate max-w-[140px]">
               {profile?.full_name || "User"}
             </span>
-            <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+            <span className="text-[10px] text-sidebar-foreground/50 truncate max-w-[140px]">
               {profile?.email || ""}
             </span>
           </div>
