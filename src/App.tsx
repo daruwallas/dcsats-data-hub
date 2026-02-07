@@ -18,6 +18,17 @@ import CompanyDetail from "@/pages/CompanyDetail";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
+// Phase 2: Public pages
+import PortalHome from "@/pages/portal/PortalHome";
+import SubmitCV from "@/pages/portal/SubmitCV";
+import CandidateOnboarding from "@/pages/portal/CandidateOnboarding";
+import HRReview from "@/pages/portal/HRReview";
+import HRSwipeReview from "@/pages/portal/HRSwipeReview";
+import InterviewSchedule from "@/pages/portal/InterviewSchedule";
+import InterviewSelect from "@/pages/portal/InterviewSelect";
+import HROptOut from "@/pages/portal/HROptOut";
+import HRReopen from "@/pages/portal/HRReopen";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,8 +40,22 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              {/* Auth */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Phase 2: Public pages (no auth) */}
+              <Route path="/portal" element={<PortalHome />} />
+              <Route path="/submit-cv" element={<SubmitCV />} />
+              <Route path="/onboarding/:candidateId" element={<CandidateOnboarding />} />
+              <Route path="/hr-review" element={<HRReview />} />
+              <Route path="/hr-swipe" element={<HRSwipeReview />} />
+              <Route path="/interview-schedule" element={<InterviewSchedule />} />
+              <Route path="/interview-select" element={<InterviewSelect />} />
+              <Route path="/hr-opt-out" element={<HROptOut />} />
+              <Route path="/hr-reopen" element={<HRReopen />} />
+
+              {/* Protected admin routes */}
               <Route
                 element={
                   <ProtectedRoute>
