@@ -17,18 +17,10 @@ const PIE_COLORS = [
   "hsl(346, 77%, 50%)", "hsl(45, 93%, 47%)",
 ];
 
-export default function Dashboard() {
-  const { profile } = useAuth();
-  const navigate = useNavigate();
+/* ── Hooks ─────────────────────────────────────────── */
 
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  };
-
-  const { data: candidateCount = 0 } = useQuery({
+function useDashboardData() {
+  const candidateCount = useQuery({
     queryKey: ["dashboard-candidates"],
     queryFn: async () => {
       const { count } = await supabase.from("candidates").select("*", { count: "exact", head: true });
@@ -36,7 +28,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: jobCount = 0 } = useQuery({
+  const jobCount = useQuery({
     queryKey: ["dashboard-jobs"],
     queryFn: async () => {
       const { count } = await supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "open");
@@ -44,7 +36,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: matchCount = 0 } = useQuery({
+  const matchCount = useQuery({
     queryKey: ["dashboard-matches"],
     queryFn: async () => {
       const { count } = await supabase.from("matches").select("*", { count: "exact", head: true });
@@ -52,7 +44,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: interviewCount = 0 } = useQuery({
+  const interviewCount = useQuery({
     queryKey: ["dashboard-interviews"],
     queryFn: async () => {
       const { count } = await supabase.from("interviews").select("*", { count: "exact", head: true }).eq("status", "scheduled");
@@ -60,7 +52,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: hiredCount = 0 } = useQuery({
+  const hiredCount = useQuery({
     queryKey: ["dashboard-hired"],
     queryFn: async () => {
       const { count } = await supabase.from("hired_candidates").select("*", { count: "exact", head: true });
@@ -68,7 +60,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: verificationCount = 0 } = useQuery({
+  const verificationCount = useQuery({
     queryKey: ["dashboard-verifications"],
     queryFn: async () => {
       const { count } = await supabase.from("verifications").select("*", { count: "exact", head: true }).eq("status", "pending");
@@ -76,7 +68,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: candidateStatuses = [] } = useQuery({
+  const candidateStatuses = useQuery({
     queryKey: ["dashboard-candidate-statuses"],
     queryFn: async () => {
       const { data } = await supabase.from("candidates").select("status");
@@ -87,7 +79,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: jobPriorities = [] } = useQuery({
+  const jobPriorities = useQuery({
     queryKey: ["dashboard-job-priorities"],
     queryFn: async () => {
       const { data } = await supabase.from("jobs").select("priority");
@@ -98,7 +90,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: recentActivity = [] } = useQuery({
+  const recentActivity = useQuery({
     queryKey: ["dashboard-activity"],
     queryFn: async () => {
       const { data } = await supabase
@@ -110,7 +102,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: pipelineStats = { pending: 0, accepted: 0, rejected: 0 } } = useQuery({
+  const pipelineStats = useQuery({
     queryKey: ["dashboard-pipeline"],
     queryFn: async () => {
       const { data } = await supabase.from("hr_pipeline").select("status");
@@ -125,13 +117,190 @@ export default function Dashboard() {
     },
   });
 
+  return {
+    candidateCount: candidateCount.data ?? 0,
+    jobCount: jobCount.data ?? 0,
+    matchCount: matchCount.data ?? 0,
+    interviewCount: interviewCount.data ?? 0,
+    hiredCount: hiredCount.data ?? 0,
+    verificationCount: verificationCount.data ?? 0,
+    candidateStatuses: candidateStatuses.data ?? [],
+    jobPriorities: jobPriorities.data ?? [],
+    recentActivity: recentActivity.data ?? [],
+    pipelineStats: pipelineStats.data ?? { pending: 0, accepted: 0, rejected: 0 },
+  };
+}
+
+/* ── Sub-components ────────────────────────────────── */
+
+function StatCard({ title, value, icon: Icon, color, onClick, delay }: {
+  title: string; value: number; icon: React.ElementType; color: string; onClick: () => void; delay: number;
+}) {
+  return (
+    <Card
+      className="cursor-pointer group hover:shadow-lg hover:-translate-y-1 transition-all duration-200 opacity-0 animate-fade-in"
+      style={{ animationDelay: `${delay}ms` }}
+      onClick={onClick}
+    >
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-xs font-medium text-muted-foreground">{title}</CardTitle>
+        <div className={`rounded-lg p-1.5 ${color} bg-opacity-10 group-hover:scale-110 transition-transform duration-200`}>
+          <Icon className={`size-4 ${color}`} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function QuickActions({ actions }: { actions: { label: string; icon: React.ElementType; path: string; color: string }[] }) {
+  const navigate = useNavigate();
+  return (
+    <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "300ms" }}>
+      <CardHeader className="pb-3"><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2">
+          {actions.map((action) => (
+            <Button
+              key={action.label}
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(action.path)}
+              className="gap-2 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <action.icon className={`size-4 ${action.color}`} />
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CandidatePipelineChart({ data }: { data: { name: string; value: number }[] }) {
+  return (
+    <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "400ms" }}>
+      <CardHeader><CardTitle className="text-base">Candidate Pipeline</CardTitle></CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No candidate data yet</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={data}>
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function JobPrioritiesChart({ data }: { data: { name: string; value: number }[] }) {
+  return (
+    <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "500ms" }}>
+      <CardHeader><CardTitle className="text-base">Job Priorities</CardTitle></CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No job data yet</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function PipelineStatsCard({ stats }: { stats: { pending: number; accepted: number; rejected: number } }) {
+  return (
+    <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "600ms" }}>
+      <CardHeader><CardTitle className="text-base">HR Pipeline Stats</CardTitle></CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          {[
+            { value: stats.pending, label: "Pending", color: "text-yellow-500" },
+            { value: stats.accepted, label: "Accepted", color: "text-green-500" },
+            { value: stats.rejected, label: "Rejected", color: "text-red-500" },
+          ].map((item) => (
+            <div key={item.label} className="space-y-1">
+              <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecentActivityCard({ logs }: { logs: { id: string; action: string; entity_type: string | null; created_at: string }[] }) {
+  const navigate = useNavigate();
+  return (
+    <Card className="opacity-0 animate-fade-in" style={{ animationDelay: "700ms" }}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Recent Activity</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/activity-logs")} className="text-xs">View All</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {logs.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log) => (
+              <div key={log.id} className="flex items-start gap-3 text-sm group hover:bg-muted/50 -mx-2 px-2 py-1 rounded-md transition-colors duration-150">
+                <Activity className="size-4 text-muted-foreground mt-0.5 shrink-0 group-hover:text-primary transition-colors duration-150" />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate">{log.action}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {log.entity_type && <span className="capitalize">{log.entity_type} · </span>}
+                    {format(new Date(log.created_at), "dd MMM, hh:mm a")}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ── Main Dashboard ────────────────────────────────── */
+
+export default function Dashboard() {
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const data = useDashboardData();
+
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   const stats = [
-    { title: "Total Candidates", value: candidateCount, icon: Users, color: "text-blue-500", path: "/candidates" },
-    { title: "Active Jobs", value: jobCount, icon: Briefcase, color: "text-green-500", path: "/jobs" },
-    { title: "Matches", value: matchCount, icon: Target, color: "text-purple-500", path: "/matches" },
-    { title: "Interviews", value: interviewCount, icon: CalendarDays, color: "text-orange-500", path: "/calendar" },
-    { title: "Hired", value: hiredCount, icon: UserCheck, color: "text-emerald-500", path: "/hired" },
-    { title: "Verifications", value: verificationCount, icon: ShieldCheck, color: "text-yellow-500", path: "/verifications" },
+    { title: "Total Candidates", value: data.candidateCount, icon: Users, color: "text-blue-500", path: "/candidates" },
+    { title: "Active Jobs", value: data.jobCount, icon: Briefcase, color: "text-green-500", path: "/jobs" },
+    { title: "Matches", value: data.matchCount, icon: Target, color: "text-purple-500", path: "/matches" },
+    { title: "Interviews", value: data.interviewCount, icon: CalendarDays, color: "text-orange-500", path: "/calendar" },
+    { title: "Hired", value: data.hiredCount, icon: UserCheck, color: "text-emerald-500", path: "/hired" },
+    { title: "Verifications", value: data.verificationCount, icon: ShieldCheck, color: "text-yellow-500", path: "/verifications" },
   ];
 
   const quickActions = [
@@ -155,123 +324,23 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(stat.path)}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <stat.icon className={`size-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
+        {stats.map((stat, i) => (
+          <StatCard key={stat.title} {...stat} delay={i * 60} onClick={() => navigate(stat.path)} />
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {quickActions.map((action) => (
-              <Button key={action.label} variant="outline" size="sm" onClick={() => navigate(action.path)} className="gap-2">
-                <action.icon className={`size-4 ${action.color}`} />
-                {action.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <QuickActions actions={quickActions} />
 
       {/* Charts */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Candidate Pipeline</CardTitle></CardHeader>
-          <CardContent>
-            {candidateStatuses.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No candidate data yet</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={candidateStatuses}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Job Priorities</CardTitle></CardHeader>
-          <CardContent>
-            {jobPriorities.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No job data yet</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie data={jobPriorities} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                    {jobPriorities.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <CandidatePipelineChart data={data.candidateStatuses} />
+        <JobPrioritiesChart data={data.jobPriorities} />
       </div>
 
-      {/* Bottom row: Pipeline Stats + Recent Activity */}
+      {/* Bottom row */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">HR Pipeline Stats</CardTitle></CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="space-y-1">
-                <p className="text-2xl font-bold text-yellow-500">{pipelineStats.pending}</p>
-                <p className="text-xs text-muted-foreground">Pending</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-2xl font-bold text-green-500">{pipelineStats.accepted}</p>
-                <p className="text-xs text-muted-foreground">Accepted</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-2xl font-bold text-red-500">{pipelineStats.rejected}</p>
-                <p className="text-xs text-muted-foreground">Rejected</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Recent Activity</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/activity-logs")} className="text-xs">View All</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {recentActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
-            ) : (
-              <div className="space-y-3">
-                {recentActivity.map((log) => (
-                  <div key={log.id} className="flex items-start gap-3 text-sm">
-                    <Activity className="size-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate">{log.action}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {log.entity_type && <span className="capitalize">{log.entity_type} · </span>}
-                        {format(new Date(log.created_at), "dd MMM, hh:mm a")}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <PipelineStatsCard stats={data.pipelineStats} />
+        <RecentActivityCard logs={data.recentActivity} />
       </div>
     </div>
   );
