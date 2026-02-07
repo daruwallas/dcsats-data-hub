@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTodoGuard } from "@/components/TodoGuard";
 import {
   Sidebar,
   SidebarContent,
@@ -82,6 +83,7 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { hasMinRole } = useAuth();
+  const { requestNavigation } = useTodoGuard();
 
   const visibleItems = items.filter(
     (item) => !item.minRole || hasMinRole(item.minRole)
@@ -98,7 +100,7 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton
                 isActive={location.pathname === item.url}
-                onClick={() => navigate(item.url)}
+                onClick={() => requestNavigation(() => navigate(item.url))}
                 tooltip={item.title}
               >
                 <item.icon className="size-4" />
