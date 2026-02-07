@@ -15,8 +15,13 @@ import Candidates from "@/pages/Candidates";
 import CandidateDetail from "@/pages/CandidateDetail";
 import Companies from "@/pages/Companies";
 import CompanyDetail from "@/pages/CompanyDetail";
-import PlaceholderPage from "@/pages/PlaceholderPage";
 import Matches from "@/pages/Matches";
+import DealCloser from "@/pages/DealCloser";
+import MoneyAlerts from "@/pages/MoneyAlerts";
+import Insights from "@/pages/Insights";
+import HiredCandidates from "@/pages/HiredCandidates";
+import MasterDB from "@/pages/MasterDB";
+import PlaceholderPage from "@/pages/PlaceholderPage";
 import MatchResumes from "@/pages/MatchResumes";
 import ReverseMatch from "@/pages/ReverseMatch";
 import HRPipeline from "@/pages/HRPipeline";
@@ -89,12 +94,12 @@ const App = () => (
                 <Route path="/verifications" element={<Verifications />} />
                 <Route path="/hr-pipeline" element={<HRPipeline />} />
                 {/* Advanced */}
-                <Route path="/deal-closer" element={<PlaceholderPage />} />
-                <Route path="/money-alerts" element={<ProtectedRoute minRole="hr_manager"><PlaceholderPage /></ProtectedRoute>} />
-                <Route path="/insights" element={<PlaceholderPage />} />
-                <Route path="/hired" element={<PlaceholderPage />} />
+                <Route path="/deal-closer" element={<DealCloser />} />
+                <Route path="/money-alerts" element={<ProtectedRoute minRole="hr_manager"><MoneyAlerts /></ProtectedRoute>} />
+                <Route path="/insights" element={<Insights />} />
+                <Route path="/hired" element={<HiredCandidates />} />
                 {/* Admin */}
-                <Route path="/master-db" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
+                <Route path="/master-db" element={<ProtectedRoute minRole="admin"><MasterDB /></ProtectedRoute>} />
                 <Route path="/productivity" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
                 <Route path="/activity-logs" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
                 <Route path="/users" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
