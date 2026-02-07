@@ -16,6 +16,9 @@ import CandidateDetail from "@/pages/CandidateDetail";
 import Companies from "@/pages/Companies";
 import CompanyDetail from "@/pages/CompanyDetail";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import Matches from "@/pages/Matches";
+import MatchResumes from "@/pages/MatchResumes";
+import ReverseMatch from "@/pages/ReverseMatch";
 import NotFound from "./pages/NotFound";
 
 // Phase 2: Public pages
@@ -71,9 +74,9 @@ const App = () => (
                 <Route path="/companies" element={<Companies />} />
                 <Route path="/companies/:id" element={<CompanyDetail />} />
                 {/* Matching */}
-                <Route path="/matches" element={<PlaceholderPage />} />
-                <Route path="/match-resumes" element={<PlaceholderPage />} />
-                <Route path="/reverse-match" element={<PlaceholderPage />} />
+                <Route path="/matches" element={<Matches />} />
+                <Route path="/match-resumes" element={<MatchResumes />} />
+                <Route path="/reverse-match" element={<ReverseMatch />} />
                 {/* Workflows */}
                 <Route path="/calendar" element={<PlaceholderPage />} />
                 <Route path="/todos" element={<PlaceholderPage />} />
