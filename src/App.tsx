@@ -21,7 +21,10 @@ import MoneyAlerts from "@/pages/MoneyAlerts";
 import Insights from "@/pages/Insights";
 import HiredCandidates from "@/pages/HiredCandidates";
 import MasterDB from "@/pages/MasterDB";
-import PlaceholderPage from "@/pages/PlaceholderPage";
+import ProductivityCenter from "@/pages/ProductivityCenter";
+import ActivityLogs from "@/pages/ActivityLogs";
+import UserManagement from "@/pages/UserManagement";
+import Settings from "@/pages/Settings";
 import MatchResumes from "@/pages/MatchResumes";
 import ReverseMatch from "@/pages/ReverseMatch";
 import HRPipeline from "@/pages/HRPipeline";
@@ -100,10 +103,10 @@ const App = () => (
                 <Route path="/hired" element={<HiredCandidates />} />
                 {/* Admin */}
                 <Route path="/master-db" element={<ProtectedRoute minRole="admin"><MasterDB /></ProtectedRoute>} />
-                <Route path="/productivity" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
-                <Route path="/activity-logs" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute minRole="admin"><PlaceholderPage /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute minRole="super_admin"><PlaceholderPage /></ProtectedRoute>} />
+                <Route path="/productivity" element={<ProtectedRoute minRole="admin"><ProductivityCenter /></ProtectedRoute>} />
+                <Route path="/activity-logs" element={<ProtectedRoute minRole="admin"><ActivityLogs /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute minRole="admin"><UserManagement /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute minRole="super_admin"><Settings /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
